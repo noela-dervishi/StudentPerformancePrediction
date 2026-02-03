@@ -48,8 +48,6 @@ public final class SwingApp {
     private final JSlider participationSlider = new JSlider(0, 10, 6);
 
     private final JLabel badgeLabel = new JLabel("—");
-    private final JLabel confidenceLabel = new JLabel("Confidence: —");
-    private final JProgressBar confidenceBar = new JProgressBar(0, 100);
     private final JTextArea explanationArea = new JTextArea(14, 70);
     private final JTextArea logArea = new JTextArea(6, 70);
 
@@ -217,8 +215,6 @@ public final class SwingApp {
             explanationArea.setText("");
             logArea.setText("");
             setBadgeNeutral();
-            confidenceLabel.setText("Confidence: —");
-            confidenceBar.setValue(0);
         });
 
         panel.add(trainButton);
@@ -236,18 +232,7 @@ public final class SwingApp {
         top.setOpaque(false);
 
         JLabel h = sectionTitle("Prediction result");
-
-        JPanel conf = new JPanel(new BorderLayout(8, 4));
-        conf.setOpaque(false);
-        confidenceLabel.setForeground(new Color(70, 70, 70));
-        confidenceBar.setStringPainted(true);
-        confidenceBar.setValue(0);
-        confidenceBar.setString("—");
-        conf.add(confidenceLabel, BorderLayout.NORTH);
-        conf.add(confidenceBar, BorderLayout.CENTER);
-
         top.add(h, BorderLayout.WEST);
-        top.add(conf, BorderLayout.CENTER);
 
         explanationArea.setEditable(false);
         explanationArea.setLineWrap(true);
@@ -309,12 +294,6 @@ public final class SwingApp {
             if ("PASS".equalsIgnoreCase(result.predictedLabel())) setBadgePass();
             else if ("FAIL".equalsIgnoreCase(result.predictedLabel())) setBadgeFail();
             else setBadgeNeutral();
-
-            int pct = (int) Math.round(result.confidence() * 100.0);
-            confidenceLabel.setText("Confidence");
-            confidenceBar.setValue(pct);
-            confidenceBar.setString(pct + "%");
-            confidenceBar.setForeground(UIManager.getColor("ProgressBar.foreground"));
         });
     }
 
@@ -476,9 +455,6 @@ public final class SwingApp {
         if ("PASS".equalsIgnoreCase(badge)) setBadgePass();
         else if ("FAIL".equalsIgnoreCase(badge)) setBadgeFail();
         else setBadgeNeutral();
-
-        // Keep progress bar system-consistent
-        confidenceBar.setForeground(UIManager.getColor("ProgressBar.foreground"));
     }
 
     private static void applyThemeRecursive(Component comp, Theme t) {
