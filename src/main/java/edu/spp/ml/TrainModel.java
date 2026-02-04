@@ -1,15 +1,14 @@
 package edu.spp.ml;
 
-import weka.classifiers.Classifier;
-import weka.classifiers.Evaluation;
-import weka.classifiers.meta.CostSensitiveClassifier;
-import weka.classifiers.trees.J48;
-import weka.classifiers.CostMatrix;
-import weka.core.Instances;
-
 import java.io.File;
 import java.util.Locale;
 import java.util.Random;
+
+import weka.classifiers.CostMatrix;
+import weka.classifiers.Evaluation;
+import weka.classifiers.meta.CostSensitiveClassifier;
+import weka.classifiers.trees.J48;
+import weka.core.Instances;
 
 /**
  * Trains a J48 decision tree model (in code, not Weka GUI) and saves it as a .model file.
@@ -31,15 +30,17 @@ public final class TrainModel {
 
         // Train/test split (70/30)
         data.randomize(new Random(42));
-        int trainSize = (int) Math.round(data.numInstances() * 0.70);
+        int trainSize = (int) Math.round(data.numInstances() * 0.80);
         int testSize = data.numInstances() - trainSize;
         Instances train = new Instances(data, 0, trainSize);
         Instances test = new Instances(data, trainSize, testSize);
 
+        // Configure J48 with slightly stronger pruning and more robust probabilities
         J48 j48 = new J48();
         j48.setUnpruned(false);
-        j48.setConfidenceFactor(0.25f);
-        j48.setMinNumObj(5);
+        j48.setConfidenceFactor(0.15f); // stronger pruning than default 0.25 to reduce overfitting
+        j48.setMinNumObj(10);           // require more instances per leaf
+        j48.setUseLaplace(true);        // smoother probability estimates
         j48.buildClassifier(train);
 
         // The PASS class can dominate heavily in synthetic datasets.

@@ -1,15 +1,15 @@
 package edu.spp.ml;
 
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
 import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.converters.CSVLoader;
-
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
 
 /**
  * Loads the CSV dataset and constructs an Instances object suitable for:
@@ -91,21 +91,35 @@ public final class DataPreprocessor {
     }
 
     private static boolean computePassLabel(Instance rawInstance, Attribute totalScoreAttr) {
+        // 1) Base academic rule: PASS if total_score >= 55 or grade is A/B/C
+        boolean basicPass = false;
+
         if (totalScoreAttr != null && totalScoreAttr.isNumeric()) {
             double score = rawInstance.value(totalScoreAttr);
-            return score >= 55.0;
+            basicPass = score >= 55.0;
+        } else {
+            Attribute gradeAttr = rawInstance.dataset().attribute(ATTR_GRADE);
+            if (gradeAttr != null && gradeAttr.isNominal()) {
+                String grade = rawInstance.stringValue(gradeAttr);
+                grade = grade == null ? "" : grade.trim().toUpperCase(Locale.ROOT);
+                // PASS for A/B/C; FAIL for D/F
+                basicPass = grade.equals("A") || grade.equals("B") || grade.equals("C");
+            }
         }
 
-        Attribute gradeAttr = rawInstance.dataset().attribute(ATTR_GRADE);
-        if (gradeAttr != null && gradeAttr.isNominal()) {
-            String grade = rawInstance.stringValue(gradeAttr);
-            grade = grade == null ? "" : grade.trim().toUpperCase(Locale.ROOT);
-            // PASS for A/B/C; FAIL for D/F
-            return grade.equals("A") || grade.equals("B") || grade.equals("C");
-        }
+        // 2) Attendance and participation requirements for being considered a PASS
+        Attribute attendanceAttr = rawInstance.dataset().attribute(ATTR_ATTENDANCE);
+        Attribute participationAttr = rawInstance.dataset().attribute(ATTR_PARTICIPATION);
 
-        // Conservative fallback
-        return false;
+        double attendance = attendanceAttr != null ? rawInstance.value(attendanceAttr) : Double.NaN;
+        double participation = participationAttr != null ? rawInstance.value(participationAttr) : Double.NaN;
+
+        boolean attendanceOk = !Double.isNaN(attendance) && attendance >= 70.0;
+        boolean participationOk = !Double.isNaN(participation) && participation >= 3.0;
+
+        // Student is labeled PASS only if both the academic rule and engagement rules are satisfied.
+        // Otherwise they are labeled FAIL.
+        return basicPass && attendanceOk && participationOk;
     }
 
     /**
