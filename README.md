@@ -6,7 +6,8 @@ This project predicts **student performance (PASS/FAIL)** from:
 - **class_participation**
 
 It uses **Java + Weka** and a **J48 Decision Tree**.  
-For every prediction, it shows a **human-readable English explanation** by extracting the **decision path** (the matching tree conditions) from the trained J48 model.
+For every prediction, it shows a **human-readable English explanation** by extracting the **decision path** (the matching tree conditions) from the trained J48 model.  
+The desktop UI is built with **Java Swing** and includes a modern layout plus a **light/dark mode** toggle.
 
 ### Project architecture (matches the report)
 - **Data Layer**: `src/main/resources/org/student_performance.csv`
@@ -15,16 +16,21 @@ For every prediction, it shows a **human-readable English explanation** by extra
 - **Presentation Layer**: `edu.spp.app.SwingApp` (desktop UI)
 
 ### Dataset
-Expected CSV columns (as in the provided dataset):
+Expected CSV columns (as in the provided dataset):  
 `student_id, weekly_self_study_hours, attendance_percentage, class_participation, total_score, grade`
 
 **Target label (PASS/FAIL)** is created inside Java code:
 - **PASS** if `total_score >= 55` (grade A/B/C)
 - **FAIL** otherwise (grade D/F)
 
-### How to run after cloning the project (Windows / any OS with Java)
+### Requirements
+- **Java JDK 11+** on your `PATH` (for `javac` and `java`)
+- No manual Weka setup needed – **`lib/weka.jar` is bundled** and used by the helper scripts
+- (Optional) **Maven 3+** if you prefer running via Maven instead of the provided scripts
 
-#### Option A (recommended here): Run without Maven (uses the bundled `lib/weka.jar`)
+### How to run after cloning the project (Windows / Linux / macOS)
+
+#### Option A (recommended): Run without Maven (uses the bundled `lib/weka.jar`)
 
 ##### 1) Train the model
 
@@ -34,7 +40,7 @@ On **Git Bash / Linux / macOS**:
 bash train.sh
 ```
 
-On **Windows CMD**:
+On **Windows CMD / PowerShell** (from the project root):
 
 ```bat
 train.cmd
@@ -51,7 +57,7 @@ On **Git Bash / Linux / macOS**:
 bash run.sh
 ```
 
-On **Windows CMD**:
+On **Windows CMD / PowerShell** (from the project root):
 
 ```bat
 run.cmd
@@ -72,10 +78,11 @@ mvn -q -DskipTests exec:java
 ```
 
 In the UI:
-- click **Train Model** (once)
+- click **Train Model** once (loads data, trains J48, saves the model)
 - then enter a student’s values and click **Predict**
+- the **PASS/FAIL badge** and the **English rule-path explanation** will update for each prediction
 
 ### Notes
 - The explanation is **local** (per prediction) and is based on the **actual decision-tree conditions** that matched the input.
-- If you replace the dataset file, re-train the model.
+- If you replace the dataset file (`src/main/resources/org/student_performance.csv`), re-train the model before predicting.
 
