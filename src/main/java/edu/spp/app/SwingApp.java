@@ -11,8 +11,6 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
-import java.util.Locale;
-
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -34,8 +32,6 @@ import javax.swing.SwingWorker;
 import javax.swing.UIManager;
 import javax.swing.WindowConstants;
 import javax.swing.border.EmptyBorder;
-
-import edu.spp.ml.TrainModel;
 import edu.spp.predict.PredictionResult;
 import edu.spp.predict.Predictor;
 import edu.spp.predict.StudentInput;
@@ -49,17 +45,14 @@ public final class SwingApp {
 
     private final JLabel badgeLabel = new JLabel("—");
     private final JTextArea explanationArea = new JTextArea(14, 70);
-    private final JTextArea logArea = new JTextArea(6, 70);
 
     private final JToggleButton themeToggle = new JToggleButton("Dark mode");
     private Theme currentTheme = Theme.LIGHT;
 
     private JPanel rootPanel;
     private JFrame frameRef;
-    private JLabel footerLabel;
     private JLabel subtitleLabel;
 
-    private JButton trainButton;
     private JButton predictButton;
     private JButton clearButton;
 
@@ -88,18 +81,27 @@ public final class SwingApp {
         c.insets = new Insets(0, 0, 0, 0);
         c.gridx = 0;
         c.gridy = 0;
-        c.weightx = 0.42;
-        c.weighty = 1;
-        c.fill = GridBagConstraints.BOTH;
-        center.add(buildInputCard(frameRef), c);
+        c.weightx = 0;
+        c.weighty = 0;
+        c.fill = GridBagConstraints.NONE;
+        c.anchor = GridBagConstraints.NORTHWEST;
+        JComponent inputCard = buildInputCard(frameRef);
+        inputCard.setPreferredSize(new Dimension(400, 500));
+        inputCard.setMinimumSize(new Dimension(400, 500));
+        inputCard.setMaximumSize(new Dimension(400, 500));
+        center.add(inputCard, c);
 
         c.gridx = 1;
-        c.weightx = 0.58;
+        c.weightx = 0;
+        c.weighty = 0;
         c.insets = new Insets(0, 16, 0, 0);
-        center.add(buildOutputCard(), c);
+        JComponent outputCard = buildOutputCard();
+        outputCard.setPreferredSize(new Dimension(500, 500));
+        outputCard.setMinimumSize(new Dimension(500, 500));
+        outputCard.setMaximumSize(new Dimension(500, 500));
+        center.add(outputCard, c);
 
         rootPanel.add(center, BorderLayout.CENTER);
-        rootPanel.add(buildFooter(), BorderLayout.SOUTH);
 
         frameRef.setContentPane(rootPanel);
 
@@ -108,7 +110,6 @@ public final class SwingApp {
         frameRef.setVisible(true);
 
         applyTheme(Theme.LIGHT);
-        log("Ready. Tip: click \"Train Model\" once, then \"Predict\".");
     }
 
     private JComponent buildHeader() {
@@ -126,12 +127,6 @@ public final class SwingApp {
         left.add(title);
         left.add(subtitleLabel);
 
-        badgeLabel.setOpaque(true);
-        badgeLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        badgeLabel.setBorder(new EmptyBorder(8, 14, 8, 14));
-        badgeLabel.setFont(badgeLabel.getFont().deriveFont(Font.BOLD, 14f));
-        setBadgeNeutral();
-
         themeToggle.setFocusPainted(false);
         themeToggle.addActionListener(e -> applyTheme(themeToggle.isSelected() ? Theme.DARK : Theme.LIGHT));
         themeToggle.setBorder(new EmptyBorder(8, 10, 8, 10));
@@ -139,7 +134,6 @@ public final class SwingApp {
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         right.setOpaque(false);
         right.add(themeToggle);
-        right.add(badgeLabel);
 
         panel.add(left, BorderLayout.CENTER);
         panel.add(right, BorderLayout.EAST);
@@ -188,36 +182,26 @@ public final class SwingApp {
     }
 
     private JComponent buildButtonsPanel(JFrame frame) {
-        JPanel panel = new JPanel(new GridLayout(1, 3, 10, 0));
+        JPanel panel = new JPanel(new GridLayout(1, 2, 10, 0));
         panel.setOpaque(false);
         panel.setBorder(new EmptyBorder(10, 0, 0, 0));
         panel.setPreferredSize(new Dimension(10, 52));
 
-        trainButton = primaryButton("Train Model");
         predictButton = primaryButton("Predict");
         clearButton = subtleButton("Clear");
-
-        trainButton.addActionListener(e -> runInBackground(frame, "Training model...", () -> {
-            TrainModel.TrainReport report = TrainModel.trainAndSaveDefaultModel();
-            log(report.toHumanString().trim());
-            predictor = null; // reload model on next prediction
-        }));
 
         predictButton.addActionListener(e -> runInBackground(frame, "Predicting...", () -> {
             StudentInput input = parseInput();
             PredictionResult result = getPredictor().predict(input);
             showResult(result);
-            log(String.format(Locale.US, "Predicted %s for student %d (%.0f%% confidence).",
-                    result.predictedLabel(), input.studentId(), result.confidence() * 100.0));
         }));
 
         clearButton.addActionListener(e -> {
             explanationArea.setText("");
-            logArea.setText("");
             setBadgeNeutral();
+            predictor = null; // reset predictor on clear
         });
 
-        panel.add(trainButton);
         panel.add(predictButton);
         panel.add(clearButton);
 
@@ -238,25 +222,24 @@ public final class SwingApp {
         explanationArea.setLineWrap(true);
         explanationArea.setWrapStyleWord(true);
         explanationArea.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        explanationArea.setRows(15);
+        explanationArea.setColumns(50);
 
-        logArea.setEditable(false);
-        logArea.setLineWrap(true);
-        logArea.setWrapStyleWord(true);
-        logArea.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        logArea.setForeground(new Color(85, 85, 85));
+        JScrollPane scrollPane = new JScrollPane(explanationArea);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setPreferredSize(new Dimension(0, 400));
+
+        badgeLabel.setOpaque(true);
+        badgeLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        badgeLabel.setBorder(new EmptyBorder(8, 14, 8, 14));
+        badgeLabel.setFont(badgeLabel.getFont().deriveFont(Font.BOLD, 14f));
+        setBadgeNeutral();
 
         JPanel body = new JPanel(new BorderLayout(10, 10));
         body.setOpaque(false);
-        body.add(new JScrollPane(explanationArea), BorderLayout.CENTER);
-
-        JPanel logs = new JPanel(new BorderLayout(6, 6));
-        logs.setOpaque(false);
-        JLabel logTitle = new JLabel("Activity");
-        logTitle.setForeground(new Color(70, 70, 70));
-        logs.add(logTitle, BorderLayout.NORTH);
-        logs.add(new JScrollPane(logArea), BorderLayout.CENTER);
-
-        body.add(logs, BorderLayout.SOUTH);
+        body.add(scrollPane, BorderLayout.CENTER);
+        body.add(badgeLabel, BorderLayout.SOUTH);
 
         card.add(top, BorderLayout.NORTH);
         card.add(body, BorderLayout.CENTER);
@@ -264,14 +247,6 @@ public final class SwingApp {
         return card;
     }
 
-    private JComponent buildFooter() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setOpaque(false);
-        footerLabel = new JLabel("Dataset: src/main/resources/org/student_performance.csv  |  Model: model/student_j48_passfail.model");
-        footerLabel.setForeground(new Color(90, 90, 90));
-        panel.add(footerLabel, BorderLayout.WEST);
-        return panel;
-    }
 
     private StudentInput parseInput() {
         int id = ((Number) studentIdSpinner.getValue()).intValue();
@@ -297,13 +272,6 @@ public final class SwingApp {
         });
     }
 
-    private void log(String text) {
-        SwingUtilities.invokeLater(() -> {
-            if (!logArea.getText().isEmpty()) logArea.append("\n");
-            logArea.append(text);
-            logArea.setCaretPosition(logArea.getDocument().getLength());
-        });
-    }
 
     private static void runInBackground(JFrame frame, String title, ThrowingRunnable work) {
         JDialog dialog = new JDialog(frame, title, true);
@@ -440,7 +408,6 @@ public final class SwingApp {
         }
 
         // Theme-aware buttons
-        if (trainButton != null) stylePrimaryButton(trainButton, theme);
         if (predictButton != null) stylePrimaryButton(predictButton, theme);
         if (clearButton != null) styleSubtleButton(clearButton, theme);
         if (themeToggle != null) {
@@ -448,7 +415,6 @@ public final class SwingApp {
             themeToggle.setForeground(theme.textPrimary);
         }
         if (subtitleLabel != null) subtitleLabel.setForeground(theme.textSecondary);
-        if (footerLabel != null) footerLabel.setForeground(theme.textSecondary);
 
         // Update badge colors for current state
         String badge = badgeLabel.getText();
