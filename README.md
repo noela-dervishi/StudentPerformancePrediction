@@ -78,8 +78,7 @@ mvn -q -DskipTests exec:java
 ```
 
 In the UI:
-- click **Train Model** once (loads data, trains J48, saves the model)
-- then enter a student’s values and click **Predict**
+- enter a student’s values and click **Predict**
 - the **PASS/FAIL badge** and the **English rule-path explanation** will update for each prediction
 
 ### Notes
