@@ -11,14 +11,6 @@ import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.converters.CSVLoader;
 
-/**
- * Loads the CSV dataset and constructs an Instances object suitable for:
- * - training J48
- * - predicting PASS/FAIL using only the user-enterable features
- *
- * Expected input CSV columns:
- * student_id, weekly_self_study_hours, attendance_percentage, class_participation, total_score, grade
- */
 public final class DataPreprocessor {
 
     public static final String RESOURCE_CSV = "/org/student_performance.csv";
@@ -48,14 +40,6 @@ public final class DataPreprocessor {
         }
     }
 
-    /**
-     * Builds a training dataset with attributes:
-     * weekly_self_study_hours, attendance_percentage, class_participation, pass_fail
-     *
-     * Target definition (per your report thresholds):
-     * - PASS if total_score >= 55  (grades A/B/C)
-     * - FAIL otherwise (grades D/F)
-     */
     public static Instances buildPassFailTrainingData(Instances raw) {
         int idxStudy = raw.attribute(ATTR_STUDY_HOURS).index();
         int idxAttendance = raw.attribute(ATTR_ATTENDANCE).index();
@@ -91,7 +75,6 @@ public final class DataPreprocessor {
     }
 
     private static boolean computePassLabel(Instance rawInstance, Attribute totalScoreAttr) {
-        // 1) Base academic rule: PASS if total_score >= 55 or grade is A/B/C
         boolean basicPass = false;
 
         if (totalScoreAttr != null && totalScoreAttr.isNumeric()) {
@@ -102,12 +85,10 @@ public final class DataPreprocessor {
             if (gradeAttr != null && gradeAttr.isNominal()) {
                 String grade = rawInstance.stringValue(gradeAttr);
                 grade = grade == null ? "" : grade.trim().toUpperCase(Locale.ROOT);
-                // PASS for A/B/C; FAIL for D/F
                 basicPass = grade.equals("A") || grade.equals("B") || grade.equals("C");
             }
         }
 
-        // 2) Attendance and participation requirements for being considered a PASS
         Attribute attendanceAttr = rawInstance.dataset().attribute(ATTR_ATTENDANCE);
         Attribute participationAttr = rawInstance.dataset().attribute(ATTR_PARTICIPATION);
 
@@ -117,15 +98,9 @@ public final class DataPreprocessor {
         boolean attendanceOk = !Double.isNaN(attendance) && attendance >= 70.0;
         boolean participationOk = !Double.isNaN(participation) && participation >= 3.0;
 
-        // Student is labeled PASS only if both the academic rule and engagement rules are satisfied.
-        // Otherwise they are labeled FAIL.
         return basicPass && attendanceOk && participationOk;
     }
 
-    /**
-     * Creates a header-only dataset matching the model input schema.
-     * Use this to attach to new instances before calling classifyInstance().
-     */
     public static Instances buildPredictionHeader() {
         List<Attribute> attrs = new ArrayList<>();
         attrs.add(new Attribute(ATTR_STUDY_HOURS));

@@ -1,18 +1,11 @@
 package edu.spp.explain;
 
-import edu.spp.explain.J48Explainer.Condition;
-import edu.spp.explain.J48Explainer.DecisionNode;
-
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Parses the "J48 pruned tree" section from J48.toString() into a traversable structure.
- *
- * Notes:
- * - This is a best-effort parser for the common Weka tree text format.
- * - Each line in the tree corresponds to a branch condition; leaf lines contain ": <CLASS>".
- */
+import edu.spp.explain.J48Explainer.Condition;
+import edu.spp.explain.J48Explainer.DecisionNode;
+
 final class J48TreeTextParser {
 
     private J48TreeTextParser() {}
@@ -21,13 +14,12 @@ final class J48TreeTextParser {
         List<String> lines = extractTreeLines(modelToString);
         DecisionNode root = new DecisionNode(null, null);
 
-        // stack[d] = last node created at depth d (depth 0 is root)
         List<DecisionNode> stack = new ArrayList<>();
         stack.add(root);
 
         for (String rawLine : lines) {
             if (rawLine.isBlank()) continue;
-            int depth = countDepth(rawLine); // number of leading '|' blocks
+            int depth = countDepth(rawLine); 
             String line = stripDepthPrefix(rawLine);
 
             ParsedLine parsed = parseLine(line);
@@ -39,7 +31,6 @@ final class J48TreeTextParser {
             DecisionNode node = new DecisionNode(parsed.condition, parsed.leafLabel);
             parent.children.add(node);
 
-            // internal node can have children; leaf nodes won't (but harmless if they do)
             stack.add(node);
         }
 
@@ -54,7 +45,6 @@ final class J48TreeTextParser {
         for (int i = 0; i < all.length; i++) {
             String s = all[i].trim();
             if (s.equalsIgnoreCase("J48 pruned tree") || s.equalsIgnoreCase("J48 unpruned tree")) {
-                // Skip the next line which is usually "------------------"
                 start = i + 2;
                 break;
             }
@@ -110,9 +100,6 @@ final class J48TreeTextParser {
     }
 
     private static ParsedLine parseLine(String line) {
-        // Example:
-        // attendance_percentage <= 78.4: FAIL (123.0/4.0)
-        // weekly_self_study_hours > 12.5
         String conditionPart = line;
         String leafPart = null;
 
@@ -127,7 +114,6 @@ final class J48TreeTextParser {
 
         String leafLabel = null;
         if (leafPart != null && !leafPart.isBlank()) {
-            // leafPart begins with class label
             String[] toks = leafPart.split("\\s+");
             if (toks.length > 0) leafLabel = toks[0].trim();
         }
@@ -135,7 +121,6 @@ final class J48TreeTextParser {
     }
 
     private static Condition parseCondition(String s) {
-        // "<attr> <= <number>" or "<attr> > <number>"
         String op;
         int opIdx;
         if ((opIdx = s.indexOf("<=")) >= 0) op = "<=";
@@ -146,7 +131,6 @@ final class J48TreeTextParser {
         String rhs = s.substring(opIdx + op.length()).trim();
         if (attr.isEmpty() || rhs.isEmpty()) return null;
 
-        // rhs might contain trailing stuff in rare cases; take first token
         String[] toks = rhs.split("\\s+");
         double threshold;
         try {

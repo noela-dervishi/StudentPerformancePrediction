@@ -11,6 +11,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
+
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -32,6 +33,7 @@ import javax.swing.SwingWorker;
 import javax.swing.UIManager;
 import javax.swing.WindowConstants;
 import javax.swing.border.EmptyBorder;
+
 import edu.spp.predict.PredictionResult;
 import edu.spp.predict.Predictor;
 import edu.spp.predict.StudentInput;
@@ -161,10 +163,14 @@ public final class SwingApp {
         styleSlider(attendanceSlider, 50, 100, 10);
         styleSlider(participationSlider, 0, 10, 1);
 
-        form.add(labeled("Student ID", studentIdSpinner), c); c.gridy++;
-        form.add(labeled("Weekly self-study hours", sliderRow(studyHoursSlider, "hours/week")), c); c.gridy++;
-        form.add(labeled("Attendance", sliderRow(attendanceSlider, "%")), c); c.gridy++;
-        form.add(labeled("Class participation", sliderRow(participationSlider, "/10")), c); c.gridy++;
+        form.add(labeled("Student ID", studentIdSpinner), c);
+        c.gridy++;
+        form.add(labeled("Weekly self-study hours", sliderRow(studyHoursSlider, "hours/week")), c);
+        c.gridy++;
+        form.add(labeled("Attendance", sliderRow(attendanceSlider, "%")), c);
+        c.gridy++;
+        form.add(labeled("Class participation", sliderRow(participationSlider, "/10")), c);
+        c.gridy++;
 
         card.add(form, BorderLayout.CENTER);
         card.add(buildButtonsPanel(frame), BorderLayout.SOUTH);
@@ -199,7 +205,7 @@ public final class SwingApp {
         clearButton.addActionListener(e -> {
             explanationArea.setText("");
             setBadgeNeutral();
-            predictor = null; // reset predictor on clear
+            predictor = null;
         });
 
         panel.add(predictButton);
@@ -247,7 +253,6 @@ public final class SwingApp {
         return card;
     }
 
-
     private StudentInput parseInput() {
         int id = ((Number) studentIdSpinner.getValue()).intValue();
         double study = studyHoursSlider.getValue();
@@ -257,7 +262,9 @@ public final class SwingApp {
     }
 
     private Predictor getPredictor() throws Exception {
-        if (predictor == null) predictor = Predictor.loadDefault();
+        if (predictor == null) {
+            predictor = Predictor.loadDefault();
+        }
         return predictor;
     }
 
@@ -266,12 +273,15 @@ public final class SwingApp {
             explanationArea.setText(result.explanation());
             explanationArea.setCaretPosition(0);
 
-            if ("PASS".equalsIgnoreCase(result.predictedLabel())) setBadgePass();
-            else if ("FAIL".equalsIgnoreCase(result.predictedLabel())) setBadgeFail();
-            else setBadgeNeutral();
+            if ("PASS".equalsIgnoreCase(result.predictedLabel())) {
+                setBadgePass();
+            } else if ("FAIL".equalsIgnoreCase(result.predictedLabel())) {
+                setBadgeFail();
+            } else {
+                setBadgeNeutral();
+            }
         });
     }
-
 
     private static void runInBackground(JFrame frame, String title, ThrowingRunnable work) {
         JDialog dialog = new JDialog(frame, title, true);
@@ -284,8 +294,14 @@ public final class SwingApp {
         dialog.setLocationRelativeTo(frame);
 
         SwingWorker<Void, Void> worker = new SwingWorker<>() {
-            @Override protected Void doInBackground() throws Exception { work.run(); return null; }
-            @Override protected void done() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                work.run();
+                return null;
+            }
+
+            @Override
+            protected void done() {
                 dialog.dispose();
                 try {
                     get();
@@ -301,10 +317,9 @@ public final class SwingApp {
 
     @FunctionalInterface
     private interface ThrowingRunnable {
+
         void run() throws Exception;
     }
-
-    // --- Styling helpers ---
 
     private static void installLookAndFeel() {
         try {
@@ -350,8 +365,6 @@ public final class SwingApp {
         return l;
     }
 
-    // (button creation moved to instance methods so colors adapt to the current theme)
-
     private static void styleSlider(JSlider s, int min, int max, int majorTick) {
         s.setMinimum(min);
         s.setMaximum(max);
@@ -394,39 +407,46 @@ public final class SwingApp {
     private void applyTheme(Theme theme) {
         this.currentTheme = theme;
 
-        // Progress bar text colors: selectionForeground is text over the filled part,
-        // selectionBackground is text over the unfilled part.
         UIManager.put("ProgressBar.selectionForeground", theme.progressTextOnFill);
         UIManager.put("ProgressBar.selectionBackground", theme.progressTextOnTrack);
 
         if (rootPanel != null) {
             rootPanel.setBackground(theme.appBg);
             applyThemeRecursive(rootPanel, theme);
-            if (frameRef != null) SwingUtilities.updateComponentTreeUI(frameRef);
+            if (frameRef != null) {
+                SwingUtilities.updateComponentTreeUI(frameRef);
+            }
             rootPanel.revalidate();
             rootPanel.repaint();
         }
 
-        // Theme-aware buttons
-        if (predictButton != null) stylePrimaryButton(predictButton, theme);
-        if (clearButton != null) styleSubtleButton(clearButton, theme);
+        if (predictButton != null) {
+            stylePrimaryButton(predictButton, theme);
+        }
+        if (clearButton != null) {
+            styleSubtleButton(clearButton, theme);
+        }
         if (themeToggle != null) {
             themeToggle.setBackground(theme.toggleBg);
             themeToggle.setForeground(theme.textPrimary);
         }
-        if (subtitleLabel != null) subtitleLabel.setForeground(theme.textSecondary);
+        if (subtitleLabel != null) {
+            subtitleLabel.setForeground(theme.textSecondary);
+        }
 
-        // Update badge colors for current state
         String badge = badgeLabel.getText();
-        if ("PASS".equalsIgnoreCase(badge)) setBadgePass();
-        else if ("FAIL".equalsIgnoreCase(badge)) setBadgeFail();
-        else setBadgeNeutral();
+        if ("PASS".equalsIgnoreCase(badge)) {
+            setBadgePass();
+        } else if ("FAIL".equalsIgnoreCase(badge)) {
+            setBadgeFail();
+        } else {
+            setBadgeNeutral();
+        }
     }
 
     private static void applyThemeRecursive(Component comp, Theme t) {
         if (comp instanceof JPanel p) {
             if (p.getBorder() instanceof javax.swing.border.CompoundBorder) {
-                // Our "card"
                 p.setBackground(t.cardBg);
                 p.setForeground(t.textPrimary);
                 p.setBorder(BorderFactory.createCompoundBorder(
@@ -456,7 +476,6 @@ public final class SwingApp {
         } else if (comp instanceof JSpinner sp) {
             sp.setBackground(t.inputBg);
         } else if (comp instanceof JButton) {
-            // Keep our custom styled buttons
         } else if (comp instanceof JToggleButton tb) {
             tb.setOpaque(true);
             tb.setBackground(t.toggleBg);
@@ -480,44 +499,44 @@ public final class SwingApp {
 
     private enum Theme {
         LIGHT(
-                new Color(248, 250, 252),  // app bg - soft slate blue-gray
-                Color.WHITE,               // card bg
-                new Color(15, 23, 42),     // primary text - slate 900
-                new Color(100, 116, 139),  // secondary text - slate 500
-                new Color(226, 232, 240),  // border - slate 200
-                new Color(255, 255, 255),  // input bg
-                new Color(241, 245, 249),  // badge neutral bg - slate 100
-                new Color(51, 65, 85),     // badge neutral fg - slate 700
-                new Color(220, 252, 231),  // badge pass bg - green 100
-                new Color(21, 128, 61),    // badge pass fg - green 700
-                new Color(254, 226, 226),  // badge fail bg - red 100
-                new Color(185, 28, 28),    // badge fail fg - red 700
-                new Color(241, 245, 249),  // progress track - slate 100
-                Color.WHITE,               // progress text on fill
-                new Color(15, 23, 42),     // progress text on track - slate 900
-                new Color(226, 232, 240),  // button border - slate 200
-                new Color(99, 102, 241),   // primary button bg - indigo 500
-                new Color(241, 245, 249)   // toggle bg - slate 100
+                new Color(248, 250, 252),
+                Color.WHITE,
+                new Color(15, 23, 42),
+                new Color(100, 116, 139),
+                new Color(226, 232, 240),
+                new Color(255, 255, 255),
+                new Color(241, 245, 249),
+                new Color(51, 65, 85),
+                new Color(220, 252, 231),
+                new Color(21, 128, 61),
+                new Color(254, 226, 226),
+                new Color(185, 28, 28),
+                new Color(241, 245, 249),
+                Color.WHITE,
+                new Color(15, 23, 42),
+                new Color(226, 232, 240),
+                new Color(99, 102, 241),
+                new Color(241, 245, 249)
         ),
         DARK(
-                new Color(15, 23, 42),     // app bg - slate 900
-                new Color(30, 41, 59),     // card bg - slate 800
-                new Color(241, 245, 249),  // primary text - slate 100
-                new Color(148, 163, 184),  // secondary text - slate 400
-                new Color(51, 65, 85),     // border - slate 700
-                new Color(30, 41, 59),     // input bg - slate 800
-                new Color(51, 65, 85),     // badge neutral bg - slate 700
-                new Color(226, 232, 240),  // badge neutral fg - slate 200
-                new Color(20, 83, 45),     // badge pass bg - green 900
-                new Color(134, 239, 172),  // badge pass fg - green 300
-                new Color(127, 29, 29),    // badge fail bg - red 900
-                new Color(252, 165, 165),  // badge fail fg - red 300
-                new Color(51, 65, 85),     // progress track - slate 700
-                new Color(15, 23, 42),     // progress text on fill - slate 900
-                Color.WHITE,               // progress text on track
-                new Color(51, 65, 85),     // button border - slate 700
-                new Color(129, 140, 248),  // primary button bg - indigo 400
-                new Color(51, 65, 85)      // toggle bg - slate 700
+                new Color(15, 23, 42),
+                new Color(30, 41, 59),
+                new Color(241, 245, 249),
+                new Color(148, 163, 184),
+                new Color(51, 65, 85),
+                new Color(30, 41, 59),
+                new Color(51, 65, 85),
+                new Color(226, 232, 240),
+                new Color(20, 83, 45),
+                new Color(134, 239, 172),
+                new Color(127, 29, 29),
+                new Color(252, 165, 165),
+                new Color(51, 65, 85),
+                new Color(15, 23, 42),
+                Color.WHITE,
+                new Color(51, 65, 85),
+                new Color(129, 140, 248),
+                new Color(51, 65, 85)
         );
 
         final Color appBg;
@@ -543,23 +562,23 @@ public final class SwingApp {
         final Color toggleBg;
 
         Theme(Color appBg,
-              Color cardBg,
-              Color textPrimary,
-              Color textSecondary,
-              Color border,
-              Color inputBg,
-              Color badgeNeutralBg,
-              Color badgeNeutralFg,
-              Color badgePassBg,
-              Color badgePassFg,
-              Color badgeFailBg,
-              Color badgeFailFg,
-              Color progressTrack,
-              Color progressTextOnFill,
-              Color progressTextOnTrack,
-              Color buttonBorder,
-              Color buttonPrimaryBg,
-              Color toggleBg
+                Color cardBg,
+                Color textPrimary,
+                Color textSecondary,
+                Color border,
+                Color inputBg,
+                Color badgeNeutralBg,
+                Color badgeNeutralFg,
+                Color badgePassBg,
+                Color badgePassFg,
+                Color badgeFailBg,
+                Color badgeFailFg,
+                Color progressTrack,
+                Color progressTextOnFill,
+                Color progressTextOnTrack,
+                Color buttonBorder,
+                Color buttonPrimaryBg,
+                Color toggleBg
         ) {
             this.appBg = appBg;
             this.cardBg = cardBg;

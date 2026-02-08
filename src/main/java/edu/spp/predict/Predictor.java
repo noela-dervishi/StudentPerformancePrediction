@@ -1,5 +1,8 @@
 package edu.spp.predict;
 
+import java.io.File;
+import java.util.Locale;
+
 import edu.spp.explain.J48Explainer;
 import edu.spp.ml.DataPreprocessor;
 import edu.spp.ml.ModelIO;
@@ -9,12 +12,6 @@ import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
 
-import java.io.File;
-import java.util.Locale;
-
-/**
- * Loads the trained model and performs Pass/Fail predictions.
- */
 public final class Predictor {
 
     private final Classifier model;

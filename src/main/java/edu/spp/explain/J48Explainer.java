@@ -1,21 +1,15 @@
 package edu.spp.explain;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
 import edu.spp.ml.DataPreprocessor;
 import edu.spp.predict.StudentInput;
 import weka.classifiers.Classifier;
 import weka.classifiers.trees.J48;
 import weka.core.Instance;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-
-/**
- * Builds a local, per-student explanation by extracting the decision-path
- * from the text form of a Weka J48 tree.
- *
- * This is intentionally "rule-like" explainability aligned with the decision tree conditions.
- */
 public final class J48Explainer {
 
     private final DecisionNode root;
@@ -51,8 +45,7 @@ public final class J48Explainer {
         english.append(String.format(
                 Locale.US,
                 "The student is predicted to %s based on the decision tree rules.\n\n",
-                predictedLabel
-        ));
+                predictedLabel));
 
         if (path.isEmpty()) {
             english.append("No rule path could be extracted from the tree text, so a simplified summary is shown.\n");
@@ -104,32 +97,41 @@ public final class J48Explainer {
                 name,
                 c.operator,
                 c.threshold,
-                units
-        );
+                units);
     }
 
     private static String recommendations(StudentInput input) {
         StringBuilder sb = new StringBuilder();
-        if (input.weeklySelfStudyHours() < 10) sb.append("- Increase study hours (target: 15–20 hours/week).\n");
-        else if (input.weeklySelfStudyHours() < 15) sb.append("- Consider adding 2–5 more study hours per week.\n");
-        else sb.append("- Keep the current study routine.\n");
+        if (input.weeklySelfStudyHours() < 10)
+            sb.append("- Increase study hours (target: 15–20 hours/week).\n");
+        else if (input.weeklySelfStudyHours() < 15)
+            sb.append("- Consider adding 2–5 more study hours per week.\n");
+        else
+            sb.append("- Keep the current study routine.\n");
 
-        if (input.attendancePercentage() < 70) sb.append("- Attendance is low; try to attend at least 80% of classes.\n");
-        else if (input.attendancePercentage() < 80) sb.append("- Improve attendance to strengthen understanding.\n");
-        else sb.append("- Maintain good attendance.\n");
+        if (input.attendancePercentage() < 70)
+            sb.append("- Attendance is low; try to attend at least 80% of classes.\n");
+        else if (input.attendancePercentage() < 80)
+            sb.append("- Improve attendance to strengthen understanding.\n");
+        else
+            sb.append("- Maintain good attendance.\n");
 
-        if (input.classParticipation() < 3) sb.append("- Participation is low; ask/answer at least 1 question per class.\n");
-        else if (input.classParticipation() < 5) sb.append("- Participate more in discussions to reinforce learning.\n");
-        else sb.append("- Keep engaging in class.\n");
+        if (input.classParticipation() < 3)
+            sb.append("- Participation is low; ask/answer at least 1 question per class.\n");
+        else if (input.classParticipation() < 5)
+            sb.append("- Participate more in discussions to reinforce learning.\n");
+        else
+            sb.append("- Keep engaging in class.\n");
 
         return sb.toString();
     }
 
-    public record Explanation(String englishText, List<Condition> path) {}
+    public record Explanation(String englishText, List<Condition> path) {
+    }
 
     static final class DecisionNode {
         final Condition condition; // condition to reach this node from its parent
-        final String label;        // PASS/FAIL if leaf
+        final String label; // PASS/FAIL if leaf
         final List<DecisionNode> children = new ArrayList<>();
 
         DecisionNode(Condition condition, String label) {
@@ -160,4 +162,3 @@ public final class J48Explainer {
         }
     }
 }
-
