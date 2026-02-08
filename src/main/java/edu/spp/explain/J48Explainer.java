@@ -130,8 +130,8 @@ public final class J48Explainer {
     }
 
     static final class DecisionNode {
-        final Condition condition; // condition to reach this node from its parent
-        final String label; // PASS/FAIL if leaf
+        final Condition condition; 
+        final String label; 
         final List<DecisionNode> children = new ArrayList<>();
 
         DecisionNode(Condition condition, String label) {
@@ -142,7 +142,7 @@ public final class J48Explainer {
 
     public static final class Condition {
         public final String attributeName;
-        public final String operator; // "<=" or ">"
+        public final String operator; 
         public final double threshold;
 
         Condition(String attributeName, String operator, double threshold) {

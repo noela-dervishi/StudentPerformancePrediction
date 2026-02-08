@@ -71,7 +71,6 @@ final class J48TreeTextParser {
             char ch = line.charAt(i);
             if (ch == '|') {
                 depth++;
-                // consume rest of block: typically "|   "
                 i++;
                 while (i < line.length() && line.charAt(i) == ' ') i++;
             } else if (ch == ' ') {
